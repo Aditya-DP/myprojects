@@ -1,0 +1,205 @@
+import logging
+import os
+from posixpath import basename, splitext
+import random
+import time
+from opentelemetry.instrumentation.system_metrics.package import _instruments as instrumentmetrics
+from opentelemetry.metrics import set_meter_provider, Observation, CallbackOptions
+import opentelemetry.metrics as metrics
+from opentelemetry.instrumentation.system_metrics import SystemMetricsInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, PeriodicExportingMetricReader
+
+configuration = {
+        "system.cpu.time": ["idle", "user", "system", "irq"],
+        "system.cpu.utilization": ["idle", "user", "system", "irq"],
+        "system.memory.usage": ["used", "free", "cached"],
+        "system.memory.utilization": ["used", "free", "cached"],
+        "system.swap.usage": ["used", "free"],
+        "system.swap.utilization": ["used", "free"],
+        "system.disk.io": ["read", "write"],
+        "system.disk.operations": ["read", "write"],
+        "system.disk.time": ["read", "write"],
+        "system.network.dropped.packets": ["transmit", "receive"],
+        "system.network.packets": ["transmit", "receive"],
+        "system.network.errors": ["transmit", "receive"],
+        "system.network.io": ["transmit", "receive"],
+        "system.network.connections": ["family", "type"],
+        "runtime.memory": ["rss", "vms"],
+        "runtime.cpu.time": ["user", "system"],
+        "runtime.gc_count": None,   
+    }
+
+
+
+if __name__ == '__main__':
+    script_name = splitext(basename(__file__))[0]
+    SystemMetricsInstrumentor()
+
+    set_meter_provider(MeterProvider(
+        metric_readers= [PeriodicExportingMetricReader(exporter= ConsoleMetricExporter(), export_interval_millis=15000)]))
+
+    # to configure custom metrics
+    # SystemMetricsInstrumentor(config=configuration).instrument()
+    meter = metrics.get_meter(script_name)
+    
+    loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
+    logging.basicConfig(level=loglevel)
+    logger = logging.getLogger(script_name)
+    logger.info("creating instruments to record metrics data")
+    requests_counter = meter.create_counter(
+        name="requests",
+        description="number of requests",
+        unit="1"
+    )
+
+    requests_size = meter.create_histogram(
+        name="request_size_bytes",
+        description="size of requests",
+        unit="byte"
+    )
+    
+    # for (number, percent) in enumerate(print(temp)):
+    #     attributes = {"cpu_number": str(number)}
+    
+    system_cpu_time_gauge = meter.create_observable_gauge(
+                name="system.cpu.time",
+                callbacks=[SystemMetricsInstrumentor()._get_system_cpu_time],
+                description="system cpu time",
+                unit="seconds",
+            )
+    system_cpu_utilization_gauge = meter.create_observable_gauge(
+                name="system.cpu.utilization",
+                callbacks=[SystemMetricsInstrumentor()._get_system_cpu_utilization],
+                description=" system cpu utilization",
+                unit="seconds",
+            )
+    system_memory_usage_gauge = meter.create_observable_gauge(
+                name="system.memory.usage",
+                callbacks=[SystemMetricsInstrumentor()._get_system_memory_usage],
+                description="System memory usage",
+                unit="seconds",
+            )
+    system_memory_utilization_gauge = meter.create_observable_gauge(
+                name="system.memory.utilization",
+                callbacks=[SystemMetricsInstrumentor()._get_system_memory_utilization],
+                description="System memory usage",
+                unit="seconds",
+            )
+    system_swap_usage_gauge = meter.create_observable_gauge(
+                name="system.swap.usage",
+                callbacks=[SystemMetricsInstrumentor()._get_system_swap_usage],
+                description="System memory usage",
+                unit="seconds",
+            )
+    system_swap_utilization_gauge = meter.create_observable_gauge(
+                name="system.swap.utilization",
+                callbacks=[SystemMetricsInstrumentor()._get_system_swap_utilization],
+                description="System memory usage",
+                unit="seconds",
+            )
+    system_disk_io_gauge = meter.create_observable_gauge(
+                name="system.disk.io",
+                callbacks=[SystemMetricsInstrumentor()._get_system_disk_io],
+                description="System memory usage",
+                unit="seconds",
+            )
+    system_disk_operations_gauge = meter.create_observable_gauge(
+                name="system.disk.operations",
+                callbacks=[SystemMetricsInstrumentor()._get_system_disk_operations],
+                description="System memory usage",
+                unit="seconds",
+            )
+    system_disk_time_gauge = meter.create_observable_gauge(
+                name="system.disk.time",
+                callbacks=[SystemMetricsInstrumentor()._get_system_disk_time],
+                description="System disk time",
+                unit="seconds",
+            )
+    
+    system_network_dropped_packets_gauge = meter.create_observable_gauge(
+                name="system.network.dropped.packets",
+                callbacks=[SystemMetricsInstrumentor()._get_system_network_dropped_packets],
+                description="system network dropped packets",
+                unit="seconds",
+            )
+    
+    system_network_packets_gauge = meter.create_observable_gauge(
+                name="system.network.packets",
+                callbacks=[SystemMetricsInstrumentor()._get_system_network_packets],
+                description="",
+                unit="seconds",
+            )
+    
+    system_network_errors_gauge = meter.create_observable_gauge(
+                name="system.network.errors",
+                callbacks=[SystemMetricsInstrumentor()._get_system_network_errors],
+                description="",
+                unit="seconds",
+            )
+    
+    system_network_io_gauge = meter.create_observable_gauge(
+                name="system.network.io",
+                callbacks=[SystemMetricsInstrumentor()._get_system_network_io],
+                description="",
+                unit="seconds",
+            )
+    
+    system_network_connections_gauge = meter.create_observable_gauge(
+                name="system.network.connections",
+                callbacks=[SystemMetricsInstrumentor()._get_system_network_connections],
+                description="",
+                unit="seconds",
+            )
+    
+    runtime_memory_gauge = meter.create_observable_gauge(
+                name="runtime.memory",
+                callbacks=[SystemMetricsInstrumentor()._get_runtime_memory],
+                description="",
+                unit="seconds",
+            )
+    
+    runtime_cpu_time_gauge = meter.create_observable_gauge(
+                name="runtime.cpu.time",
+                callbacks=[SystemMetricsInstrumentor()._get_runtime_cpu_time],
+                description="",
+                unit="seconds",
+            )
+    
+    runtime_gc_count_gauge = meter.create_observable_gauge(
+                name="runtime.gc_count",
+                callbacks=[SystemMetricsInstrumentor()._get_runtime_gc_count],
+                description="",
+                unit="seconds",
+            )
+    
+    
+    
+    staging_attributes = {"environment": "staging"}
+    testing_attributes = {"environment": "testing"}
+
+    logger.info("starting instrumented application...")
+    try:
+        while True:
+            # requests_counter.add(random.randint(0, 25), staging_attributes)
+            # requests_size.record(random.randint(0, 300), staging_attributes)
+
+            # requests_counter.add(random.randint(0, 35), testing_attributes)
+            # requests_size.record(random.randint(0, 100), testing_attributes)3
+            time.sleep(5)
+
+    except KeyboardInterrupt:
+        logger.info("shutting down...")
+    
+# if __name__ == '__main__':
+#     # exporter = ConsoleMetricExporter()
+#     set_meter_provider(MeterProvider(
+#         [PeriodicExportingMetricReader(exporter= ConsoleMetricExporter(), export_interval_millis=5000)]))
+#     try:
+#         # while True:
+#             # Update the metric instruments using the direct calling convention
+#             print()
+#             # time.sleep(5)
+
+#     except KeyboardInterrupt:
+#         Logger.info("shutting down...")
