@@ -22,7 +22,12 @@ loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
 logging.basicConfig(level=loglevel)
 logger = logging.getLogger(script_name)
 # Start Prometheus client
-start_http_server(port=8001, addr="0.0.0.0")
+
+#For client to be hosted on a port with particular address
+#start_http_server(port=8001, addr="0.0.0.0")
+
+#For client to be hosted on a port with address as node ip
+start_http_server(port=8001)
 # Initialize PrometheusMetricReader which pulls metrics from the SDK
 # on-demand to respond to scrape requests
 reader = PrometheusMetricReader()
